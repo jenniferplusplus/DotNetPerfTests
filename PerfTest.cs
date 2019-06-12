@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using BenchmarkDotNet.Attributes;
@@ -14,72 +15,66 @@ namespace StringPerf
     [RPlotExporter, RankColumn]
     public class PerfTest
     {
-        private int count;
+        [Params(2, 5, 10, 20, 40, 80, 160)] public int N;
+        [Params(2, 5, 10, 20)] public int L;
 
-//        [Params(100, 200, 400, 600, 800, 1000)] public int N;
-        [Params(10, 20, 50)] public int N;
-//        [Params(100, 1000, 10000)] public int N;
+        public string Fill;
 
         [GlobalSetup]
         public void Setup()
         {
-            count = N;
+            Fill = "0".PadRight(L);
         }
 
         [Benchmark(Baseline = true)]
-        public string Concat() => Concat(N);
+        public string Concat() => Concat(N, Fill);
         
         [Benchmark]
-        public string Interpolation() => Interpolation(N);
+        public string Interpolation() => Interpolation(N, Fill);
 
         [Benchmark]
-        public string Format() => Format(N);
-
-        [Benchmark]
-        public string StringBuilder() => StringBuilder(N);
+        public string StringBuilder() => StringBuilder(N, Fill);
         
-        public string Concat(int n)
+        [Benchmark]
+        public string Join() => Join(N, Fill);
+        
+        public string Concat(int n, string fill)
         {
             var result = "";
             for (int i = 0; i < n; i++)
             {
-                result += i;
+                result += fill;
             }
 
             return result;
         }
-        
-        public string Interpolation(int n)
+
+        public string Interpolation(int n, string fill)
         {
             var result = "";
             for (int i = 0; i < n; i++)
             {
-                result = $"{result}{n}";
+                result = $"{result}{fill}";
             }
 
             return result;
         }
-        
-        public string Format(int n)
-        {
-            var result = "";
-            for (int i = 0; i < n; i++)
-            {
-                result = string.Format("{0}{1}", result, i);
-            }
 
-            return result;
-        }
-        
-        public string StringBuilder(int n)
+        public string StringBuilder(int n, string fill)
         {
             StringBuilder sb = new StringBuilder("");
             for (int i = 0; i < n; i++)
             {
-                sb.Append(i);
+                sb.Append(fill);
             }
 
             return sb.ToString();
+        }
+
+        public string Join(int n, string fill)
+        {
+            var list = Enumerable.Range(0, n).Select(i => fill);
+            return String.Join("", list);
         }
     }
 }
